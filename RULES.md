@@ -20,7 +20,7 @@
 - Setup mode must accurately reflect the current timer state.
 - Display mode must remain usable on desktop and mobile layouts.
 - Controls must remain keyboard accessible and icon-only actions must keep explicit labels.
-- Keep global header controls anchored to the top-right area on wide screens unless mobile constraints require stacking.
+- Keep global header controls aligned with the title row and anchored to the top-right area on wide screens unless mobile constraints require stacking.
 
 ## Repository Rules
 

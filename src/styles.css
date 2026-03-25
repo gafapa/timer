@@ -135,9 +135,10 @@ button {
 
 .header-actions {
   position: absolute;
-  top: 0.85rem;
+  top: 50%;
   right: 0.85rem;
   z-index: 2;
+  transform: translateY(-50%);
 }
 
 .compact-header {
@@ -1011,6 +1012,7 @@ button {
     display: flex;
     justify-content: center;
     margin-bottom: 0.45rem;
+    transform: none;
   }
 
   .display-preview-panel .timer-stage {
