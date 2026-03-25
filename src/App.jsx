@@ -365,11 +365,8 @@ function App() {
           {(transitionStyles) =>
             screen === "setup" ? (
               <section className="screen-stack" style={transitionStyles}>
-                <Paper radius="xl" p="lg" className="ui-panel hero-panel compact-header">
-                  <Stack gap="sm" align="center" justify="center" className="panel-center-stack">
-                    <Title order={1} className="screen-title">
-                      {t("appTitle")}
-                    </Title>
+                <Paper radius="xl" p="lg" className="ui-panel hero-panel compact-header header-panel">
+                  <div className="header-actions">
                     <Select
                       aria-label={t("languageLabel")}
                       data={LANGUAGE_OPTIONS}
@@ -380,6 +377,11 @@ function App() {
                       value={language}
                       onChange={handleLanguageChange}
                     />
+                  </div>
+                  <Stack gap="sm" align="center" justify="center" className="panel-center-stack">
+                    <Title order={1} className="screen-title">
+                      {t("appTitle")}
+                    </Title>
                   </Stack>
                 </Paper>
 

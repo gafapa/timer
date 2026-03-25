@@ -129,6 +129,17 @@ button {
   overflow: hidden;
 }
 
+.header-panel {
+  position: relative;
+}
+
+.header-actions {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+}
+
 .compact-header {
   padding-block: 0.2rem;
 }
@@ -993,6 +1004,13 @@ button {
   .library-head,
   .preview-card-head {
     flex-direction: column;
+  }
+
+  .header-actions {
+    position: static;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.45rem;
   }
 
   .display-preview-panel .timer-stage {
