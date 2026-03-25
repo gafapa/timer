@@ -348,6 +348,14 @@ function App() {
   }
 
   function handleShowSetup() {
+    if (mode === "running") {
+      window.clearInterval(tickerRef.current);
+      tickerRef.current = null;
+      setRemainingMs(Math.max(0, (endAt ?? Date.now()) - Date.now()));
+      setEndAt(null);
+      setMode("paused");
+    }
+
     stopSoundPlayback(audioPlaybackRef);
     setFinishAcknowledged(true);
     setScreen("setup");
@@ -496,9 +504,9 @@ function App() {
                             <TimerStage
                               compact
                               timer={activeTimer}
-                              mode="idle"
-                              progress={1}
-                              remainingMs={totalMs}
+                              mode={mode}
+                              progress={progress}
+                              remainingMs={safeRemainingMs}
                               totalMs={totalMs}
                             />
                           </div>
@@ -832,21 +840,28 @@ function TimerStage({
 
 function normalizeTimer(timer) {
   return {
-    name: timer.name.trim() || "Temporizador sin nombre",
+    name: normalizeName(timer.name),
     minutes: clampNumber(timer.minutes, 0, 180),
     seconds: clampNumber(timer.seconds, 0, 59),
     style: normalizeStyle(timer.style),
-    color: timer.color,
+    color: normalizeColor(timer.color),
     sound: normalizeSound(timer.sound),
   };
 }
 
 function normalizeStoredTimer(timer) {
   return {
-    ...timer,
-    style: normalizeStyle(timer.style),
-    sound: normalizeSound(timer.sound),
+    ...normalizeTimer(timer),
+    id: normalizeTimerId(timer?.id),
   };
+}
+
+function normalizeName(name) {
+  return typeof name === "string" && name.trim() ? name.trim() : "Temporizador sin nombre";
+}
+
+function normalizeTimerId(timerId) {
+  return typeof timerId === "string" && timerId.trim() ? timerId : crypto.randomUUID();
 }
 
 function normalizeStyle(style) {
@@ -859,6 +874,10 @@ function normalizeStyle(style) {
 
 function normalizeSound(sound) {
   return SOUND_OPTIONS.some((option) => option.value === sound) ? sound : "bell";
+}
+
+function normalizeColor(color) {
+  return PALETTE.includes(color) ? color : PALETTE[0];
 }
 
 function clampNumber(value, min, max) {

@@ -1,61 +1,61 @@
-# Timer
+# TempoLab
 
-Aplicacion web de temporizadores hecha con React, Vite y Mantine.
+TempoLab is a browser-based timer app built with React, Vite, and Mantine. It lets users create reusable timer presets, store them locally, and launch a presentation-friendly timer view for classrooms, workshops, and focused work sessions.
 
-Permite crear varios temporizadores, guardarlos en el navegador y lanzarlos en una vista grande para usarla en clase, en sesiones de trabajo o en dinamicas rapidas.
+## Features
 
-## Funciones
+- Create and edit timers with a name, duration, color, visual style, and finish sound.
+- Save timer presets in browser `localStorage`.
+- Launch timers in a large display mode.
+- Choose between four visual variants:
+  - digital clock
+  - hourglass
+  - energy bar
+  - numeric cards
+- Preview finish sounds before saving a preset.
+- Loop the finish alarm until it is silenced.
+- Pause an active timer automatically when leaving display mode.
+- Normalize persisted timer data on load to avoid stale or invalid saved state.
 
-- Crear y editar temporizadores con nombre, duracion, color, estilo y sonido.
-- Guardar temporizadores en `localStorage`.
-- Mostrar el temporizador en pantalla grande.
-- Elegir entre varios estilos visuales:
-  - reloj digital
-  - reloj de arena
-  - barra de energia
-  - panel numerico
-- Reproducir una alarma final con varios sonidos.
-- Mantener la alarma sonando en bucle hasta silenciarla.
-
-## Tecnologias
+## Tech Stack
 
 - React 19
 - Vite
 - Mantine
 - Tabler Icons
 
-## Requisitos
+## Requirements
 
-- Node.js 18 o superior
+- Node.js 18 or newer
 - npm
 
-## Instalacion
+## Install
 
 ```bash
 npm install
 ```
 
-## Desarrollo
+## Development
 
 ```bash
 npm run dev
 ```
 
-La aplicacion se abrira normalmente en `http://localhost:5173`.
+The app usually starts at [http://localhost:5173](http://localhost:5173).
 
-## Build de produccion
+## Production Build
 
 ```bash
 npm run build
 ```
 
-## Vista previa de produccion
+## Production Preview
 
 ```bash
 npm run preview
 ```
 
-## Estructura
+## Project Structure
 
 ```text
 src/
@@ -66,8 +66,8 @@ index.html
 vite.config.js
 ```
 
-## Notas
+## Notes
 
-- Los temporizadores se guardan localmente en el navegador.
-- La carpeta `dist/` se genera al compilar.
-- La carpeta `node_modules/` no se incluye en el repositorio.
+- Timer presets are stored locally in the browser.
+- `dist/` is generated during the build step.
+- `node_modules/` is not tracked in the repository.
