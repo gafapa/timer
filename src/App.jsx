@@ -370,7 +370,6 @@ function App() {
                     <Select
                       aria-label={t("languageLabel")}
                       data={LANGUAGE_OPTIONS}
-                      label={t("languageLabel")}
                       leftSection={<IconLanguage size={16} />}
                       size="sm"
                       style={{ width: 220 }}
