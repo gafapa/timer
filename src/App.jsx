@@ -23,14 +23,22 @@ import {
   IconBellOff,
   IconClock,
   IconDeviceFloppy,
-  IconPencil,
   IconEye,
+  IconLanguage,
+  IconPencil,
   IconPlayerPause,
   IconPlayerPlay,
   IconPlus,
   IconRotateClockwise2,
   IconTrash,
 } from "@tabler/icons-react";
+import {
+  DEFAULT_LANGUAGE,
+  detectInitialLanguage,
+  LANGUAGE_OPTIONS,
+  LANGUAGE_STORAGE_KEY,
+  translate,
+} from "./i18n";
 
 const STORAGE_KEY = "tempo-lab-timers-v2";
 const PALETTE = ["#ff7a18", "#f84f7f", "#11a579", "#3c91ff", "#8f57ff", "#ffbf00"];
@@ -43,55 +51,14 @@ const DEFAULT_DRAFT = {
   sound: "bell",
 };
 
-const STYLE_OPTIONS = [
-  { value: "digital", label: "Reloj digital" },
-  { value: "hourglass", label: "Reloj de arena" },
-  { value: "energy", label: "Barra de energia" },
-  { value: "cards", label: "Panel numerico" },
-];
-
-const SOUND_OPTIONS = [
-  { value: "none", label: "Sin sonido" },
-  { value: "bell", label: "Campana" },
-  { value: "beep", label: "Beep" },
-  { value: "chime", label: "Chime" },
-  { value: "alarm", label: "Alarma" },
-];
-
-const SAMPLE_TIMERS = [
-  {
-    id: crypto.randomUUID(),
-    name: "Lectura silenciosa",
-    minutes: 12,
-    seconds: 0,
-    style: "digital",
-    color: "#3c91ff",
-    sound: "bell",
-  },
-  {
-    id: crypto.randomUUID(),
-    name: "Recoger material",
-    minutes: 2,
-    seconds: 30,
-    style: "hourglass",
-    color: "#ff7a18",
-    sound: "chime",
-  },
-  {
-    id: crypto.randomUUID(),
-    name: "Desafio relampago",
-    minutes: 1,
-    seconds: 0,
-    style: "cards",
-    color: "#f84f7f",
-    sound: "alarm",
-  },
-];
+const STYLE_OPTIONS = ["digital", "hourglass", "energy", "cards"];
+const SOUND_OPTIONS = ["none", "bell", "beep", "chime", "alarm"];
 
 function App() {
   const audioPlaybackRef = useRef({ context: null, timeoutId: null });
   const finishPlaybackRef = useRef("");
   const tickerRef = useRef(null);
+  const [language, setLanguage] = useState(detectInitialLanguage);
   const [timers, setTimers] = useState([]);
   const [draft, setDraft] = useState(DEFAULT_DRAFT);
   const [selectedId, setSelectedId] = useState(null);
@@ -101,24 +68,27 @@ function App() {
   const [screen, setScreen] = useState("setup");
   const [finishAcknowledged, setFinishAcknowledged] = useState(false);
 
+  const t = (key, params) => translate(language, key, params);
   const activeTimer = { id: selectedId ?? "draft", ...draft };
   const totalMs = getDurationMs(activeTimer);
   const safeRemainingMs = mode === "idle" ? totalMs : remainingMs;
   const progress = Math.max(0, Math.min(1, safeRemainingMs / Math.max(totalMs, 1000)));
   const finishState = getFinishState(mode, activeTimer.sound, finishAcknowledged);
+  const styleOptions = getStyleOptions(t);
+  const soundOptions = getSoundOptions(t);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      setTimers(SAMPLE_TIMERS);
+      setTimers(createSampleTimers(language));
       return;
     }
 
     try {
       const parsed = JSON.parse(stored);
-      setTimers(Array.isArray(parsed) ? parsed.map(normalizeStoredTimer) : SAMPLE_TIMERS);
+      setTimers(Array.isArray(parsed) ? parsed.map(normalizeStoredTimer) : createSampleTimers(language));
     } catch {
-      setTimers(SAMPLE_TIMERS);
+      setTimers(createSampleTimers(language));
     }
   }, []);
 
@@ -181,6 +151,17 @@ function App() {
   }, [activeTimer.color]);
 
   useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    document.documentElement.lang = language;
+    document.title = t("documentTitle");
+
+    const description = document.querySelector('meta[name="description"]');
+    if (description) {
+      description.setAttribute("content", t("documentDescription"));
+    }
+  }, [language]);
+
+  useEffect(() => {
     const onEscape = (event) => {
       if (event.key === "Escape" && screen === "display") {
         handleShowSetup();
@@ -189,7 +170,7 @@ function App() {
 
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
-  }, [screen]);
+  }, [screen, mode, endAt]);
 
   useEffect(() => {
     document.body.classList.toggle("display-mode", screen === "display");
@@ -370,6 +351,10 @@ function App() {
     setFinishAcknowledged(true);
   }
 
+  function handleLanguageChange(value) {
+    setLanguage(value ?? DEFAULT_LANGUAGE);
+  }
+
   return (
     <>
       <div className="ambient ambient-a"></div>
@@ -383,8 +368,18 @@ function App() {
                 <Paper radius="xl" p="lg" className="ui-panel hero-panel compact-header">
                   <Stack gap="sm" align="center" justify="center" className="panel-center-stack">
                     <Title order={1} className="screen-title">
-                      Temporizador
+                      {t("appTitle")}
                     </Title>
+                    <Select
+                      aria-label={t("languageLabel")}
+                      data={LANGUAGE_OPTIONS}
+                      label={t("languageLabel")}
+                      leftSection={<IconLanguage size={16} />}
+                      size="sm"
+                      style={{ width: 220 }}
+                      value={language}
+                      onChange={handleLanguageChange}
+                    />
                   </Stack>
                 </Paper>
 
@@ -394,8 +389,8 @@ function App() {
                       <Stack gap="md" align="center" className="setup-fields">
                         <SimpleGrid cols={{ base: 1, sm: 3 }}>
                           <TextInput
-                            label="Nombre"
-                            placeholder="Lectura silenciosa"
+                            label={t("nameLabel")}
+                            placeholder={t("namePlaceholder")}
                             required
                             size="md"
                             value={draft.name}
@@ -403,8 +398,8 @@ function App() {
                           />
 
                           <Select
-                            data={STYLE_OPTIONS}
-                            label="Estilo"
+                            data={styleOptions}
+                            label={t("styleLabel")}
                             size="md"
                             value={draft.style}
                             onChange={(value) => updateDraft("style", value ?? "digital")}
@@ -412,15 +407,15 @@ function App() {
 
                           <Group align="flex-end" gap="xs" wrap="nowrap">
                             <Select
-                              data={SOUND_OPTIONS}
-                              label="Sonido"
+                              data={soundOptions}
+                              label={t("soundLabel")}
                               size="md"
                               style={{ flex: 1 }}
                               value={draft.sound}
                               onChange={(value) => updateDraft("sound", value ?? "bell")}
                             />
                             <ActionIcon
-                              aria-label="Preescuchar sonido"
+                              aria-label={t("previewSoundAria")}
                               color="orange"
                               disabled={draft.sound === "none"}
                               radius="xl"
@@ -438,7 +433,7 @@ function App() {
                             allowDecimal={false}
                             allowNegative={false}
                             clampBehavior="strict"
-                            label="Minutos"
+                            label={t("minutesLabel")}
                             max={180}
                             min={0}
                             size="md"
@@ -450,7 +445,7 @@ function App() {
                             allowDecimal={false}
                             allowNegative={false}
                             clampBehavior="strict"
-                            label="Segundos"
+                            label={t("secondsLabel")}
                             max={59}
                             min={0}
                             size="md"
@@ -461,13 +456,13 @@ function App() {
 
                         <Stack gap="xs" align="center" className="setup-color-block">
                           <Text fw={600} size="sm">
-                            Color
+                            {t("colorLabel")}
                           </Text>
                           <Group gap="xs" justify="center">
                             {PALETTE.map((color) => (
                               <ActionIcon
                                 key={color}
-                                aria-label={`Color ${color}`}
+                                aria-label={t("selectColorAria", { color })}
                                 className="color-action"
                                 radius="xl"
                                 size={42}
@@ -490,13 +485,13 @@ function App() {
                         <Stack justify="space-between" h="100%" align="center" className="preview-card-stack">
                           <Group justify="space-between" align="flex-start" className="preview-card-head">
                             <Stack gap={4} align="center">
-                              <Text fw={800}>Vista rápida</Text>
+                              <Text fw={800}>{t("quickPreviewTitle")}</Text>
                               <Text c="dimmed" size="sm">
-                                {formatDuration(totalMs)}
+                                {formatDuration(totalMs, t)}
                               </Text>
                             </Stack>
                             <Badge radius="xl" variant="light" color="orange">
-                              {getStyleLabel(activeTimer.style)}
+                              {getStyleLabel(activeTimer.style, t)}
                             </Badge>
                           </Group>
 
@@ -508,6 +503,7 @@ function App() {
                               progress={progress}
                               remainingMs={safeRemainingMs}
                               totalMs={totalMs}
+                              t={t}
                             />
                           </div>
 
@@ -518,7 +514,7 @@ function App() {
                               size="md"
                               type="submit"
                             >
-                              {selectedId ? "Guardar cambios" : "Guardar"}
+                              {selectedId ? t("saveChangesButton") : t("saveButton")}
                             </Button>
 
                             <Button
@@ -529,7 +525,7 @@ function App() {
                               variant="light"
                               onClick={() => setScreen("display")}
                             >
-                              Ver
+                              {t("viewButton")}
                             </Button>
 
                             {selectedId ? (
@@ -542,7 +538,7 @@ function App() {
                                 variant="light"
                                 onClick={handleDelete}
                               >
-                                Eliminar
+                                {t("deleteButton")}
                               </Button>
                             ) : null}
                           </Group>
@@ -554,12 +550,12 @@ function App() {
 
                 <Paper radius="xl" p="lg" className="ui-panel compact-library-panel">
                   <Group justify="space-between" mb="md" className="library-head">
-                    <Title order={3}>Guardados</Title>
+                    <Title order={3}>{t("savedTitle")}</Title>
                     <Group gap="sm" justify="center">
                       <Badge radius="xl" variant="light" color="gray">
                         {timers.length}
                       </Badge>
-                      <ActionIcon radius="xl" size={42} variant="light" color="orange" onClick={handleNew}>
+                      <ActionIcon aria-label={t("newTimerAria")} radius="xl" size={42} variant="light" color="orange" onClick={handleNew}>
                         <IconPlus size={22} />
                       </ActionIcon>
                     </Group>
@@ -572,7 +568,7 @@ function App() {
                           <ThemeIcon radius="xl" size={42} variant="light" color="gray">
                             <IconClock size={20} />
                           </ThemeIcon>
-                          <Text fw={700}>Sin temporizadores</Text>
+                          <Text fw={700}>{t("noTimersTitle")}</Text>
                         </Stack>
                       </Card>
                     ) : (
@@ -587,14 +583,14 @@ function App() {
                           <Stack gap="md" align="center" className="saved-card-stack">
                             <Group justify="space-between" align="flex-start">
                               <Stack gap={2} className="saved-copy">
-                                <Text fw={800}>{timer.name}</Text>
+                                <Text fw={800}>{getTimerName(timer, t)}</Text>
                                 <Text c="dimmed" size="sm">
-                                  {getStyleLabel(timer.style)}
+                                  {getStyleLabel(timer.style, t)}
                                 </Text>
                               </Stack>
                               <Group gap={6} align="center" className="saved-icon-actions">
                                 <ActionIcon
-                                  aria-label={`Editar ${timer.name}`}
+                                  aria-label={t("editTimerAria", { name: getTimerName(timer, t) })}
                                   radius="xl"
                                   variant="light"
                                   onClick={() => handleSelect(timer)}
@@ -602,7 +598,7 @@ function App() {
                                   <IconPencil size={16} />
                                 </ActionIcon>
                                 <ActionIcon
-                                  aria-label={`Ver ${timer.name}`}
+                                  aria-label={t("viewTimerAria", { name: getTimerName(timer, t) })}
                                   radius="xl"
                                   variant="light"
                                   color="orange"
@@ -611,7 +607,7 @@ function App() {
                                   <IconEye size={16} />
                                 </ActionIcon>
                                 <ActionIcon
-                                  aria-label={`Borrar ${timer.name}`}
+                                  aria-label={t("deleteTimerAria", { name: getTimerName(timer, t) })}
                                   color="red"
                                   radius="xl"
                                   variant="light"
@@ -630,6 +626,7 @@ function App() {
                                 progress={1}
                                 remainingMs={getDurationMs(timer)}
                                 totalMs={getDurationMs(timer)}
+                                t={t}
                               />
                             </div>
                           </Stack>
@@ -649,7 +646,7 @@ function App() {
                       variant="light"
                       onClick={handleShowSetup}
                     >
-                      Configurar
+                      {t("setupButton")}
                     </Button>
 
                     <Group justify="center" wrap="wrap" className="controls-row display-top-controls">
@@ -659,7 +656,7 @@ function App() {
                         size="md"
                         onClick={handleToggleTimer}
                       >
-                        {mode === "running" ? "Pausar" : mode === "paused" ? "Reanudar" : mode === "finished" ? "Repetir" : "Iniciar"}
+                        {mode === "running" ? t("pauseButton") : mode === "paused" ? t("resumeButton") : mode === "finished" ? t("repeatButton") : t("startButton")}
                       </Button>
                       <Button
                         leftSection={<IconRotateClockwise2 size={18} />}
@@ -668,7 +665,7 @@ function App() {
                         variant="light"
                         onClick={handleReset}
                       >
-                        Reiniciar
+                        {t("resetButton")}
                       </Button>
                       {finishState === "ringing" ? (
                         <Button
@@ -679,13 +676,13 @@ function App() {
                           variant="filled"
                           onClick={handleSilenceAlarm}
                         >
-                          Silenciar
+                          {t("silenceButton")}
                         </Button>
                       ) : null}
                     </Group>
 
                     <Badge radius="xl" size="lg" variant="light" color="orange">
-                      {getStyleLabel(activeTimer.style)}
+                      {getStyleLabel(activeTimer.style, t)}
                     </Badge>
                   </Group>
                 </Paper>
@@ -701,6 +698,7 @@ function App() {
                     progress={progress}
                     remainingMs={safeRemainingMs}
                     totalMs={totalMs}
+                    t={t}
                   />
                 </Paper>
               </section>
@@ -724,6 +722,7 @@ function TimerStage({
   hideStatus = false,
   interactive = false,
   onClick,
+  t,
 }) {
   const finished = mode === "finished" && remainingMs === 0;
   const showHeader = !compact && (!hideName || !hideStatus);
@@ -733,7 +732,7 @@ function TimerStage({
 
   return (
     <section
-      aria-label={canSilence ? "Temporizador terminado. Pulsa para silenciar el sonido." : undefined}
+      aria-label={canSilence ? t("timerFinishedSilenceAria") : undefined}
       className={[
         "timer-stage",
         compact ? "compact-stage" : "",
@@ -774,9 +773,9 @@ function TimerStage({
       {showHeader ? (
         <header className="timer-header">
           <div>
-            {!hideName ? <h3 className="timer-name">{timer.name || "Temporizador sin nombre"}</h3> : null}
+            {!hideName ? <h3 className="timer-name">{getTimerName(timer, t)}</h3> : null}
           </div>
-          {!hideStatus ? <span className="timer-badge">{getStatusLabel(mode)}</span> : null}
+          {!hideStatus ? <span className="timer-badge">{getStatusLabel(mode, t)}</span> : null}
         </header>
       ) : null}
 
@@ -840,12 +839,12 @@ function TimerStage({
 
 function normalizeTimer(timer) {
   return {
-    name: normalizeName(timer.name),
-    minutes: clampNumber(timer.minutes, 0, 180),
-    seconds: clampNumber(timer.seconds, 0, 59),
-    style: normalizeStyle(timer.style),
-    color: normalizeColor(timer.color),
-    sound: normalizeSound(timer.sound),
+    name: normalizeName(timer?.name),
+    minutes: clampNumber(timer?.minutes, 0, 180),
+    seconds: clampNumber(timer?.seconds, 0, 59),
+    style: normalizeStyle(timer?.style),
+    color: normalizeColor(timer?.color),
+    sound: normalizeSound(timer?.sound),
   };
 }
 
@@ -857,7 +856,7 @@ function normalizeStoredTimer(timer) {
 }
 
 function normalizeName(name) {
-  return typeof name === "string" && name.trim() ? name.trim() : "Temporizador sin nombre";
+  return typeof name === "string" ? name.trim() : "";
 }
 
 function normalizeTimerId(timerId) {
@@ -869,11 +868,11 @@ function normalizeStyle(style) {
     return "cards";
   }
 
-  return STYLE_OPTIONS.some((option) => option.value === style) ? style : "digital";
+  return STYLE_OPTIONS.includes(style) ? style : "digital";
 }
 
 function normalizeSound(sound) {
-  return SOUND_OPTIONS.some((option) => option.value === sound) ? sound : "bell";
+  return SOUND_OPTIONS.includes(sound) ? sound : "bell";
 }
 
 function normalizeColor(color) {
@@ -906,32 +905,102 @@ function splitClock(ms) {
   return [String(minutes).padStart(2, "0"), String(seconds).padStart(2, "0")];
 }
 
-function formatDuration(ms) {
+function formatDuration(ms, t) {
   const totalSeconds = Math.round(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
   if (minutes && seconds) {
-    return `${minutes} min ${seconds} s`;
+    return `${minutes} ${t("minuteShort")} ${seconds} ${t("secondShort")}`;
   }
 
   if (minutes) {
-    return `${minutes} min`;
+    return `${minutes} ${t("minuteShort")}`;
   }
 
-  return `${seconds} s`;
+  return `${seconds} ${t("secondShort")}`;
 }
 
-function getStyleLabel(style) {
-  return STYLE_OPTIONS.find((option) => option.value === style)?.label ?? style;
+function getStyleOptions(t) {
+  return STYLE_OPTIONS.map((style) => ({
+    value: style,
+    label: getStyleLabel(style, t),
+  }));
 }
 
-function getStatusLabel(mode) {
-  if (mode === "running") return "En marcha";
-  if (mode === "paused") return "En pausa";
-  if (mode === "finished") return "Terminado";
-  return "Listo";
+function getSoundOptions(t) {
+  return SOUND_OPTIONS.map((sound) => ({
+    value: sound,
+    label: getSoundLabel(sound, t),
+  }));
 }
+
+function getStyleLabel(style, t) {
+  const labels = {
+    digital: t("styleDigital"),
+    hourglass: t("styleHourglass"),
+    energy: t("styleEnergy"),
+    cards: t("styleCards"),
+  };
+
+  return labels[style] ?? style;
+}
+
+function getSoundLabel(sound, t) {
+  const labels = {
+    none: t("soundNone"),
+    bell: t("soundBell"),
+    beep: t("soundBeep"),
+    chime: t("soundChime"),
+    alarm: t("soundAlarm"),
+  };
+
+  return labels[sound] ?? sound;
+}
+
+function getStatusLabel(mode, t) {
+  if (mode === "running") return t("timerRunningStatus");
+  if (mode === "paused") return t("timerPausedStatus");
+  if (mode === "finished") return t("timerFinishedStatus");
+  return t("timerReadyStatus");
+}
+
+function getTimerName(timer, t) {
+  return timer.name || t("unnamedTimer");
+}
+
+function createSampleTimers(language) {
+  return [
+    {
+      id: crypto.randomUUID(),
+      name: translate(language, "sampleSilentReading"),
+      minutes: 12,
+      seconds: 0,
+      style: "digital",
+      color: "#3c91ff",
+      sound: "bell",
+    },
+    {
+      id: crypto.randomUUID(),
+      name: translate(language, "samplePackUp"),
+      minutes: 2,
+      seconds: 30,
+      style: "hourglass",
+      color: "#ff7a18",
+      sound: "chime",
+    },
+    {
+      id: crypto.randomUUID(),
+      name: translate(language, "sampleLightningChallenge"),
+      minutes: 1,
+      seconds: 0,
+      style: "cards",
+      color: "#f84f7f",
+      sound: "alarm",
+    },
+  ];
+}
+
 
 function getFinishState(mode, sound, finishAcknowledged) {
   if (mode !== "finished") {

@@ -6,6 +6,8 @@
 - Update Markdown documentation whenever behavior, architecture, or project workflow changes.
 - Preserve compatibility with the current stack: React, Vite, Mantine, and Tabler Icons.
 - Prefer browser-safe APIs because the application is fully client-side.
+- Route every user-facing string through the translation layer instead of hardcoding copy in components.
+- Review translated copy for spelling, accents, and consistency before shipping.
 
 ## Data Rules
 

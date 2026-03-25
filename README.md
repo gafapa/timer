@@ -5,6 +5,7 @@ TempoLab is a browser-based timer app built with React, Vite, and Mantine. It le
 ## Features
 
 - Create and edit timers with a name, duration, color, visual style, and finish sound.
+- Switch the interface between Spanish, Galician, English, French, German, Catalan, and Basque.
 - Save timer presets in browser `localStorage`.
 - Launch timers in a large display mode.
 - Choose between four visual variants:
@@ -16,6 +17,7 @@ TempoLab is a browser-based timer app built with React, Vite, and Mantine. It le
 - Loop the finish alarm until it is silenced.
 - Pause an active timer automatically when leaving display mode.
 - Normalize persisted timer data on load to avoid stale or invalid saved state.
+- Keep document language and metadata synchronized with the selected locale.
 
 ## Tech Stack
 
@@ -60,6 +62,7 @@ npm run preview
 ```text
 src/
   App.jsx
+  i18n.js
   main.jsx
   styles.css
 index.html
