@@ -8,12 +8,14 @@
 - Prefer browser-safe APIs because the application is fully client-side.
 - Route every user-facing string through the translation layer instead of hardcoding copy in components.
 - Review translated copy for spelling, accents, and consistency before shipping.
+- Keep PWA metadata, icons, and service worker behavior aligned with the actual installable app experience.
 
 ## Data Rules
 
 - Persist timer presets only through the browser `localStorage` layer.
 - Normalize stored timer data before rendering it.
 - Treat saved presets as templates and keep transient runtime state in React state.
+- Version cache names when changing service worker caching behavior so stale assets can be retired safely.
 
 ## UX Rules
 
